@@ -3,8 +3,13 @@
 </template>
 
 <script>
+import { getSingerList } from '@/service/singer'
 export default {
-  name: 'singer'
+  name: 'singer',
+  async created() {
+    const res = await getSingerList()
+    console.log(res)
+  }
 }
 </script>
 
