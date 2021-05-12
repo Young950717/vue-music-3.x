@@ -7,11 +7,19 @@ const loadingDirective = {
         const app = createApp(Loading) // 生成loading组件app
         const instance = app.mount(document.createElement('div')) // 挂载在生成的div上
         el.instance = instance
+        const title = binding.arg
+        if (typeof title !== 'undefined') {
+            instance.setTitle(title)
+        }
         if (binding.value) {
             append(el)
         }
     },
     updated(el, binding) {
+        const title = binding.arg
+        if (typeof title !== 'undefined') {
+            el.instance.setTitle(title)
+        }
         if (binding.value !== binding.oldValue) {
             binding.value ? append(el) : remove(el)
         }
