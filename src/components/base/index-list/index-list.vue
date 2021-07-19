@@ -11,15 +11,15 @@
         </ul>
       </li>
     </ul>
-    <div class="fixed">
+    <div class="fixed" v-show="fixedTitle !== ''">
       <div class="fixed-title">{{ fixedTitle }}</div>
     </div>
   </scroll>
 </template>
 
 <script>
-import scroll from '../scroll/scroll.vue';
-import useFixed from './user-fixed';
+import scroll from '../scroll/scroll.vue'
+import useFixed from './user-fixed'
 export default {
   name: 'index-list',
   props: {
@@ -27,22 +27,18 @@ export default {
       type: Array
     }
   },
-  setup(props) {
-    const { groupRef, onScroll } = useFixed(props);
+  setup (props) {
+    const { groupRef, onScroll, fixedTitle } = useFixed(props)
     return {
       groupRef,
-      onScroll
-    };
-  },
-  data() {
-    return {
-      fixedTitle: ''
-    };
+      onScroll,
+      fixedTitle
+    }
   },
   components: {
     scroll
   }
-};
+}
 </script>
 <style lang="scss" scoped>
 .index-list {
