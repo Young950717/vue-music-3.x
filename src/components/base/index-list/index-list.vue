@@ -1,48 +1,75 @@
 <template>
-  <scroll class="index-list" :probe-type="3" @scroll="onScroll">
+  <scroll class="index-list" :probe-type="3" @scroll="onScroll" ref="scrollRef">
     <ul ref="groupRef">
       <li v-for="group in data" :key="group.title" class="group">
         <h2 class="title">{{ group.title }}</h2>
         <ul>
-          <li v-for="item in group.list" :key="item.id" class="item">
+          <li @click="onItemClick(item)" v-for="item in group.list" :key="item.id" class="item">
             <img class="avatar" v-lazy="item.pic" />
             <span class="name">{{ item.name }}</span>
           </li>
         </ul>
       </li>
     </ul>
-    <div class="fixed">
+    <div class="fixed" v-show="fixedTitle !== ''" :style="fixedStyle">
       <div class="fixed-title">{{ fixedTitle }}</div>
+    </div>
+    <div
+      class="shortcut"
+      @touchstart.stop.prevent="onShortcutTouchStart"
+      @touchmove.stop.prevent="onShortcutTouchMove"
+      @touchend.stop.prevent
+    >
+      <ul>
+        <li
+          v-for="(item, index) in shortcutList"
+          :data-index="index"
+          :key="item"
+          class="item"
+          :class="{ current: currentIdx === index }"
+        >
+          {{ item }}
+        </li>
+      </ul>
     </div>
   </scroll>
 </template>
 
 <script>
-import scroll from '../scroll/scroll.vue';
-import useFixed from './user-fixed';
+import scroll from '../scroll/scroll.vue'
+import useFixed from './user-fixed'
+import usershortcut from './use-shortcut'
 export default {
   name: 'index-list',
+  emits: ['select'],
   props: {
     data: {
       type: Array
     }
   },
-  setup(props) {
-    const { groupRef, onScroll } = useFixed(props);
+  setup (props, context) {
+    const { groupRef, onScroll, fixedTitle, fixedStyle, currentIdx } = useFixed(props)
+    const { shortcutList, onShortcutTouchStart, onShortcutTouchMove, scrollRef } = usershortcut(props, groupRef)
+    function onItemClick (item) {
+      context.emit('select', item)
+    }
     return {
+      onItemClick,
       groupRef,
-      onScroll
-    };
-  },
-  data() {
-    return {
-      fixedTitle: ''
-    };
+      onScroll,
+      fixedTitle,
+      fixedStyle,
+      currentIdx,
+      shortcutList,
+      scrollRef,
+      onShortcutTouchStart,
+      onShortcutTouchMove
+    }
   },
   components: {
     scroll
   }
-};
+}
 </script>
 <style lang="scss" scoped>
 .index-list {

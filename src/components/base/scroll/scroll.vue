@@ -5,8 +5,8 @@
 </template>
 
 <script>
-import useScroll from './use-scroll';
-import { ref } from 'vue';
+import useScroll from './use-scroll'
+import { ref } from 'vue'
 export default {
   name: 'scroll',
   props: {
@@ -20,14 +20,15 @@ export default {
     }
   },
   emits: ['scroll'],
-  setup(props, { emit }) {
-    const rootRef = ref(null);
-    useScroll(rootRef, props, emit);
+  setup (props, { emit }) {
+    const rootRef = ref(null)
+    const scroll = useScroll(rootRef, props, emit)
     return {
-      rootRef
-    };
+      rootRef,
+      scroll
+    }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>
