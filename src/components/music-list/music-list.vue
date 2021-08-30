@@ -7,7 +7,14 @@
     <div class="bg-image" ref="bgImage" :style="bgImageStyle">
       <div class="filter" :style="filterStyle"></div>
     </div>
-    <scroll @scroll="onScroll" :probe-type="3" v-loading="loading" class="list" :style="scrollStyle">
+    <scroll
+      @scroll="onScroll"
+      :probe-type="3"
+      v-no-result:[noResultText]="noResult"
+      v-loading="loading"
+      class="list"
+      :style="scrollStyle"
+    >
       <div class="song-list-wrapper">
         <song-list :songs="songs"></song-list>
       </div>
@@ -41,15 +48,20 @@ export default {
     },
     title: String,
     pic: String,
-    loading: Boolean
+    loading: Boolean,
+    noResultText: {
+      type: String,
+      default: '抱歉，没有找到你想要的歌曲'
+    }
   },
   computed: {
     bgImageStyle () {
       const scrollY = this.scrollY
-      const zIndex = scrollY > this.maxTranslateY ? 10 : 0
-      const paddingTop = scrollY > this.maxTranslateY ? 0 : '70%'
-      const height = scrollY > this.maxTranslateY ? `${RESERVED_HEIGHT}px` : 0
-      const translateZ = scrollY > this.maxTranslateY ? 1 : 0 // ios兼容
+      const maxTranslateY = this.maxTranslateY
+      const zIndex = scrollY > maxTranslateY ? 10 : 0
+      const paddingTop = scrollY > maxTranslateY ? 0 : '70%'
+      const height = scrollY > maxTranslateY ? `${RESERVED_HEIGHT}px` : 0
+      const translateZ = scrollY > maxTranslateY ? 1 : 0 // ios兼容
       const scale = scrollY < 0 ? 1 + Math.abs(scrollY / this.imageHeight) : 1
       return {
         zIndex,
@@ -69,6 +81,9 @@ export default {
       return {
         backdropFilter: `blur(${blur}px)`
       }
+    },
+    noResult () {
+      return !this.loading && !this.songs.length
     }
   },
   mounted () {
