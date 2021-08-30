@@ -34,7 +34,7 @@ export default function createLoadingLikeDirective (Comp) {
     updated (el, binding) {
       const title = binding.arg
       if (typeof title !== 'undefined') {
-        el.instance.setTitle(title)
+        el[name].instance.setTitle(title)
       }
       if (binding.value !== binding.oldValue) {
         binding.value ? append(el) : remove(el)
