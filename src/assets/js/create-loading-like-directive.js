@@ -17,6 +17,7 @@ export default function createLoadingLikeDirective (Comp) {
   }
   return {
     mounted (el, binding) {
+      // debugger
       const app = createApp(Comp) // 生成对应组件app
       const instance = app.mount(document.createElement('div')) // 挂载在生成的div上
       if (!el[name]) {

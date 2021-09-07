@@ -6,19 +6,127 @@
       </div>
       <div class="top">
         <div class="back">
-          <i class="icon-back"></i>
+          <i class="icon-back" @click="goBack"></i>
         </div>
         <h1 class="title">{{ currentSong.name }}</h1>
         <h2 class="subtitle">{{ currentSong.singer }}</h2>
       </div>
+      <div class="bottom">
+        <div class="operators">
+          <div class="icon i-left">
+            <i class="icon-sequence"></i>
+          </div>
+          <div class="icon i-left">
+            <i @click="prev" class="icon-prev"></i>
+          </div>
+          <div class="icon i-center">
+            <i @click="togglePlay" :class="playIcon"></i>
+          </div>
+          <div class="icon i-right">
+            <i @click="next" class="icon-next"></i>
+          </div>
+          <div class="icon i-right">
+            <i class="icon-not-favorite"></i>
+          </div>
+        </div>
+      </div>
     </div>
-    <audio></audio>
+    <audio @pause="pause" ref="audioRef"></audio>
   </div>
 </template>
 
 <script>
+import { useStore } from 'vuex'
+import { computed, watch, ref } from 'vue'
 export default {
-
+  name: 'player',
+  setup () {
+    const audioRef = ref(null)
+    const store = useStore()
+    const fullScreen = computed(() => store.state.fullScreen)
+    const currentSong = computed(() => store.getters.currentSong)
+    const playing = computed(() => store.state.playing)
+    const currentIndex = computed(() => store.state.currentIndex)
+    const playlist = computed(() => store.state.playlist)
+    const playIcon = computed(() => {
+      return playing.value ? 'icon-pause' : 'icon-play'
+    })
+    watch(currentSong, newSong => {
+      if (!newSong.id || !newSong.url) {
+        return
+      }
+      const audioEl = audioRef.value
+      audioEl.src = newSong.url
+      audioEl.play()
+    })
+    watch(playing, newPlaying => {
+      const audioEl = audioRef.value
+      newPlaying ? audioEl.play() : audioEl.pause()
+    })
+    function goBack () {
+      store.commit('setFullScreen', false)
+    }
+    function togglePlay () {
+      store.commit('setPlayingState', !playing.value)
+    }
+    function pause () {
+      store.commit('setPlayingState', false)
+    }
+    function prev () {
+      const list = playlist.value
+      if (list.length === 0) return
+      if (list.length === 1) {
+        loop()
+      } else {
+        let index = currentIndex.value - 1
+        if (index === -1) {
+          // 到头了
+          index = list.length - 1
+        }
+        // 更新currentIndex
+        store.commit('setCurrentIndex', index)
+        // 切换之后要播放
+        if (!playing.value) {
+          store.commit('setPlayingState', true)
+        }
+      }
+    }
+    function next () {
+      const list = playlist.value
+      if (list.length === 0) return
+      if (list.length === 1) {
+        loop()
+      } else {
+        let index = currentIndex.value + 1
+        if (index === list.length) {
+          // 到尾了
+          index = 0
+        }
+        // 更新currentIndex
+        store.commit('setCurrentIndex', index)
+        // 切换之后要播放
+        if (!playing.value) {
+          store.commit('setPlayingState', true)
+        }
+      }
+    }
+    function loop () {
+      const audioEl = audioRef.value
+      audioEl.currentTime = 0
+      audioEl.play()
+    }
+    return {
+      fullScreen,
+      currentSong,
+      audioRef,
+      goBack,
+      playIcon,
+      togglePlay,
+      pause,
+      prev,
+      next
+    }
+  }
 }
 </script>
 
