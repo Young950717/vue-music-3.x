@@ -14,15 +14,15 @@
       <div class="bottom">
         <div class="operators">
           <div class="icon i-left">
-            <i class="icon-sequence"></i>
+            <i :class="modeIcon" @click="changeMode"></i>
           </div>
-          <div class="icon i-left">
+          <div class="icon i-left" :class="disableCls">
             <i @click="prev" class="icon-prev"></i>
           </div>
-          <div class="icon i-center">
+          <div class="icon i-center" :class="disableCls">
             <i @click="togglePlay" :class="playIcon"></i>
           </div>
-          <div class="icon i-right">
+          <div class="icon i-right" :class="disableCls">
             <i @click="next" class="icon-next"></i>
           </div>
           <div class="icon i-right">
@@ -31,50 +31,69 @@
         </div>
       </div>
     </div>
-    <audio @pause="pause" ref="audioRef"></audio>
+    <audio @pause="pause" ref="audioRef" @canplay="ready" @error="error"></audio>
   </div>
 </template>
 
 <script>
 import { useStore } from 'vuex'
 import { computed, watch, ref } from 'vue'
+import useMode from './user-mode'
 export default {
   name: 'player',
   setup () {
+    // data
     const audioRef = ref(null)
+    const songReady = ref(false) // 歌曲是否已经准备好播放
+    // hooks
+    const { modeIcon, changeMode } = useMode()
+    // vuex
     const store = useStore()
     const fullScreen = computed(() => store.state.fullScreen)
     const currentSong = computed(() => store.getters.currentSong)
     const playing = computed(() => store.state.playing)
     const currentIndex = computed(() => store.state.currentIndex)
     const playlist = computed(() => store.state.playlist)
+    // computed
     const playIcon = computed(() => {
       return playing.value ? 'icon-pause' : 'icon-play'
     })
+    const disableCls = computed(() => {
+      return songReady.value ? '' : 'disable'
+    })
+    // watch
     watch(currentSong, newSong => {
       if (!newSong.id || !newSong.url) {
         return
       }
+      // 切歌的时候要把songReady置为false
+      songReady.value = false
       const audioEl = audioRef.value
       audioEl.src = newSong.url
       audioEl.play()
     })
     watch(playing, newPlaying => {
+      if (!songReady.value) return
       const audioEl = audioRef.value
       newPlaying ? audioEl.play() : audioEl.pause()
     })
+    // methods
     function goBack () {
       store.commit('setFullScreen', false)
     }
+
     function togglePlay () {
+      if (!songReady.value) return
       store.commit('setPlayingState', !playing.value)
     }
+
     function pause () {
       store.commit('setPlayingState', false)
     }
+
     function prev () {
       const list = playlist.value
-      if (list.length === 0) return
+      if (!songReady.value || list.length === 0) return
       if (list.length === 1) {
         loop()
       } else {
@@ -91,9 +110,10 @@ export default {
         }
       }
     }
+
     function next () {
       const list = playlist.value
-      if (list.length === 0) return
+      if (!songReady.value || list.length === 0) return
       if (list.length === 1) {
         loop()
       } else {
@@ -110,11 +130,22 @@ export default {
         }
       }
     }
+
     function loop () {
       const audioEl = audioRef.value
       audioEl.currentTime = 0
       audioEl.play()
     }
+
+    function ready () {
+      if (songReady.value) return
+      songReady.value = true
+    }
+
+    function error () {
+      songReady.value = true
+    }
+
     return {
       fullScreen,
       currentSong,
@@ -124,7 +155,13 @@ export default {
       togglePlay,
       pause,
       prev,
-      next
+      next,
+      ready,
+      disableCls,
+      error,
+      // mode模块
+      modeIcon,
+      changeMode
     }
   }
 }
