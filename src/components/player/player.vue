@@ -26,7 +26,7 @@
             <i @click="next" class="icon-next"></i>
           </div>
           <div class="icon i-right">
-            <i class="icon-not-favorite"></i>
+            <i @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
           </div>
         </div>
       </div>
@@ -39,6 +39,7 @@
 import { useStore } from 'vuex'
 import { computed, watch, ref } from 'vue'
 import useMode from './user-mode'
+import useFavorite from './use-favorite'
 export default {
   name: 'player',
   setup () {
@@ -47,6 +48,7 @@ export default {
     const songReady = ref(false) // 歌曲是否已经准备好播放
     // hooks
     const { modeIcon, changeMode } = useMode()
+    const { getFavoriteIcon, toggleFavorite } = useFavorite()
     // vuex
     const store = useStore()
     const fullScreen = computed(() => store.state.fullScreen)
@@ -161,7 +163,9 @@ export default {
       error,
       // mode模块
       modeIcon,
-      changeMode
+      changeMode,
+      getFavoriteIcon,
+      toggleFavorite
     }
   }
 }
