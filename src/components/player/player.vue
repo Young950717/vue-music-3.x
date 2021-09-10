@@ -12,6 +12,17 @@
         <h2 class="subtitle">{{ currentSong.singer }}</h2>
       </div>
       <div class="bottom">
+        <div class="progress-wrapper">
+          <span class="time time-l">{{ formatTime(currentTime) }}</span>
+          <div class="progress-bar-wrapper">
+            <progress-bar
+              @progress-changed="onProgressChanged"
+              @progress-changing="onProgressChanging"
+              :progress="progress"
+            ></progress-bar>
+          </div>
+          <span class="time time-r">{{ formatTime(currentSong.duration) }}</span>
+        </div>
         <div class="operators">
           <div class="icon i-left">
             <i :class="modeIcon" @click="changeMode"></i>
@@ -31,7 +42,7 @@
         </div>
       </div>
     </div>
-    <audio @pause="pause" ref="audioRef" @canplay="ready" @error="error"></audio>
+    <audio ref="audioRef" @ended="end" @canplay="ready" @error="error" @pause="pause" @timeupdate="updateTime"></audio>
   </div>
 </template>
 
@@ -40,12 +51,20 @@ import { useStore } from 'vuex'
 import { computed, watch, ref } from 'vue'
 import useMode from './user-mode'
 import useFavorite from './use-favorite'
+import ProgressBar from './progress-bar.vue'
+import { formatTime } from '@/assets/js/utils'
+import { PLAY_MODE } from '@/assets/js/constant'
 export default {
   name: 'player',
+  components: {
+    ProgressBar
+  },
   setup () {
     // data
     const audioRef = ref(null)
     const songReady = ref(false) // 歌曲是否已经准备好播放
+    const currentTime = ref(0) // 当前播放时间
+    let progressChanging = false // 是否手动拖动标记
     // hooks
     const { modeIcon, changeMode } = useMode()
     const { getFavoriteIcon, toggleFavorite } = useFavorite()
@@ -56,12 +75,16 @@ export default {
     const playing = computed(() => store.state.playing)
     const currentIndex = computed(() => store.state.currentIndex)
     const playlist = computed(() => store.state.playlist)
+    const playMode = computed(() => store.state.playMode)
     // computed
     const playIcon = computed(() => {
       return playing.value ? 'icon-pause' : 'icon-play'
     })
     const disableCls = computed(() => {
       return songReady.value ? '' : 'disable'
+    })
+    const progress = computed(() => {
+      return currentTime.value / currentSong.value.duration
     })
     // watch
     watch(currentSong, newSong => {
@@ -70,6 +93,7 @@ export default {
       }
       // 切歌的时候要把songReady置为false
       songReady.value = false
+      currentTime.value = 0
       const audioEl = audioRef.value
       audioEl.src = newSong.url
       audioEl.play()
@@ -137,6 +161,7 @@ export default {
       const audioEl = audioRef.value
       audioEl.currentTime = 0
       audioEl.play()
+      store.commit('setPlayingState', true)
     }
 
     function ready () {
@@ -148,18 +173,52 @@ export default {
       songReady.value = true
     }
 
+    function updateTime (e) {
+      if (!progressChanging) {
+        currentTime.value = e.target.currentTime
+      }
+    }
+    function onProgressChanging (progress) {
+      // console.log(progress)
+      progressChanging = true
+      currentTime.value = currentSong.value.duration * progress
+    }
+    function onProgressChanged (progress) {
+      // console.log(progress)
+      progressChanging = false
+      audioRef.value.currentTime = currentTime.value = currentSong.value.duration * progress
+      if (!playing.value) {
+        store.commit('setPlayingState', true)
+      }
+    }
+    function end () {
+      currentTime.value = 0
+      if (playMode.value === PLAY_MODE.loop) {
+        loop()
+      } else {
+        next()
+      }
+    }
+
     return {
       fullScreen,
       currentSong,
+      progress,
+      currentTime,
       audioRef,
       goBack,
       playIcon,
       togglePlay,
+      formatTime,
       pause,
       prev,
       next,
       ready,
+      end,
+      updateTime,
       disableCls,
+      onProgressChanged,
+      onProgressChanging,
       error,
       // mode模块
       modeIcon,
