@@ -4,6 +4,7 @@
       <div class="background">
         <img :src="currentSong.pic" />
       </div>
+      <!-- 标题 -->
       <div class="top">
         <div class="back">
           <i class="icon-back" @click="goBack"></i>
@@ -11,6 +12,31 @@
         <h1 class="title">{{ currentSong.name }}</h1>
         <h2 class="subtitle">{{ currentSong.singer }}</h2>
       </div>
+      <!-- 大cd -->
+      <div class="middle">
+        <div class="middle-l">
+          <div class="cd-wrapper">
+            <div ref="cdRef" class="cd">
+              <img ref="cdImageRef" :src="currentSong.pic" class="image" :class="cdCls" />
+            </div>
+          </div>
+        </div>
+        <scroll class="middle-r">
+          <div class="lyric-wrapper">
+            <div v-if="currentLyric">
+              <p
+                class="text"
+                v-for="(line, index) in currentLyric.lines"
+                :class="{ current: currentLineNum === index }"
+                :key="line.num"
+              >
+                {{ line.txt }}
+              </p>
+            </div>
+          </div>
+        </scroll>
+      </div>
+      <!-- 进度条播放按钮 -->
       <div class="bottom">
         <div class="progress-wrapper">
           <span class="time time-l">{{ formatTime(currentTime) }}</span>
@@ -51,13 +77,17 @@ import { useStore } from 'vuex'
 import { computed, watch, ref } from 'vue'
 import useMode from './user-mode'
 import useFavorite from './use-favorite'
+import userCd from './use-cd'
+import useLyric from './use-lyric'
 import ProgressBar from './progress-bar.vue'
 import { formatTime } from '@/assets/js/utils'
 import { PLAY_MODE } from '@/assets/js/constant'
+import Scroll from '../base/scroll/scroll.vue'
 export default {
   name: 'player',
   components: {
-    ProgressBar
+    ProgressBar,
+    Scroll
   },
   setup () {
     // data
@@ -68,6 +98,8 @@ export default {
     // hooks
     const { modeIcon, changeMode } = useMode()
     const { getFavoriteIcon, toggleFavorite } = useFavorite()
+    const { cdCls, cdRef, cdImageRef } = userCd()
+    const { currentLyric, currentLineNum, playLyric } = useLyric({ songReady, currentTime })
     // vuex
     const store = useStore()
     const fullScreen = computed(() => store.state.fullScreen)
@@ -167,6 +199,7 @@ export default {
     function ready () {
       if (songReady.value) return
       songReady.value = true
+      playLyric()
     }
 
     function error () {
@@ -206,6 +239,8 @@ export default {
       progress,
       currentTime,
       audioRef,
+      cdRef,
+      cdImageRef,
       goBack,
       playIcon,
       togglePlay,
@@ -224,7 +259,10 @@ export default {
       modeIcon,
       changeMode,
       getFavoriteIcon,
-      toggleFavorite
+      toggleFavorite,
+      cdCls,
+      currentLyric,
+      currentLineNum
     }
   }
 }
