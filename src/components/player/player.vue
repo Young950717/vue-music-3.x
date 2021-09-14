@@ -20,10 +20,13 @@
               <img ref="cdImageRef" :src="currentSong.pic" class="image" :class="cdCls" />
             </div>
           </div>
+          <div class="playing-lyric-wrapper">
+            <div class="playing-lyric">{{ playingLyric }}</div>
+          </div>
         </div>
-        <scroll class="middle-r">
+        <scroll ref="lyricScrollRef" class="middle-r">
           <div class="lyric-wrapper">
-            <div v-if="currentLyric">
+            <div ref="lyricListRef" v-if="currentLyric">
               <p
                 class="text"
                 v-for="(line, index) in currentLyric.lines"
@@ -32,6 +35,9 @@
               >
                 {{ line.txt }}
               </p>
+            </div>
+            <div class="pure-music" v-show="pureMusicLyric">
+              <p>{{ pureMusicLyric }}</p>
             </div>
           </div>
         </scroll>
@@ -99,7 +105,16 @@ export default {
     const { modeIcon, changeMode } = useMode()
     const { getFavoriteIcon, toggleFavorite } = useFavorite()
     const { cdCls, cdRef, cdImageRef } = userCd()
-    const { currentLyric, currentLineNum, playLyric } = useLyric({ songReady, currentTime })
+    const {
+      currentLyric,
+      currentLineNum,
+      playLyric,
+      stopLyric,
+      lyricScrollRef,
+      lyricListRef,
+      pureMusicLyric,
+      playingLyric
+    } = useLyric({ songReady, currentTime })
     // vuex
     const store = useStore()
     const fullScreen = computed(() => store.state.fullScreen)
@@ -133,7 +148,13 @@ export default {
     watch(playing, newPlaying => {
       if (!songReady.value) return
       const audioEl = audioRef.value
-      newPlaying ? audioEl.play() : audioEl.pause()
+      if (newPlaying) {
+        audioEl.play()
+        playLyric()
+      } else {
+        audioEl.pause()
+        stopLyric()
+      }
     })
     // methods
     function goBack () {
@@ -215,6 +236,8 @@ export default {
       // console.log(progress)
       progressChanging = true
       currentTime.value = currentSong.value.duration * progress
+      playLyric()
+      stopLyric()
     }
     function onProgressChanged (progress) {
       // console.log(progress)
@@ -223,6 +246,7 @@ export default {
       if (!playing.value) {
         store.commit('setPlayingState', true)
       }
+      playLyric()
     }
     function end () {
       currentTime.value = 0
@@ -240,6 +264,8 @@ export default {
       currentTime,
       audioRef,
       cdRef,
+      lyricScrollRef,
+      lyricListRef,
       cdImageRef,
       goBack,
       playIcon,
@@ -258,9 +284,11 @@ export default {
       // mode模块
       modeIcon,
       changeMode,
+      pureMusicLyric,
       getFavoriteIcon,
       toggleFavorite,
       cdCls,
+      playingLyric,
       currentLyric,
       currentLineNum
     }
@@ -334,6 +362,7 @@ export default {
       font-size: 0;
       .middle-l {
         display: inline-block;
+        // display: none;
         vertical-align: top;
         position: relative;
         width: 100%;
