@@ -13,8 +13,13 @@
         <h2 class="subtitle">{{ currentSong.singer }}</h2>
       </div>
       <!-- 大cd -->
-      <div class="middle">
-        <div class="middle-l">
+      <div
+        class="middle"
+        @touchstart.prevent="onMiddleTouchStart"
+        @touchmove.prevent="onMiddleTouchMove"
+        @touchend.prevent="onMiddleTouchEnd"
+      >
+        <div class="middle-l" :style="middleLStyle">
           <div class="cd-wrapper">
             <div ref="cdRef" class="cd">
               <img ref="cdImageRef" :src="currentSong.pic" class="image" :class="cdCls" />
@@ -24,7 +29,7 @@
             <div class="playing-lyric">{{ playingLyric }}</div>
           </div>
         </div>
-        <scroll ref="lyricScrollRef" class="middle-r">
+        <scroll ref="lyricScrollRef" class="middle-r" :style="middleRStyle">
           <div class="lyric-wrapper">
             <div ref="lyricListRef" v-if="currentLyric">
               <p
@@ -44,6 +49,10 @@
       </div>
       <!-- 进度条播放按钮 -->
       <div class="bottom">
+        <div class="dot-wrapper">
+          <span :class="{ active: currentShow === 'cd' }" class="dot"></span>
+          <span :class="{ active: currentShow === 'lyric' }" class="dot"></span>
+        </div>
         <div class="progress-wrapper">
           <span class="time time-l">{{ formatTime(currentTime) }}</span>
           <div class="progress-bar-wrapper">
@@ -86,6 +95,7 @@ import useFavorite from './use-favorite'
 import userCd from './use-cd'
 import useLyric from './use-lyric'
 import ProgressBar from './progress-bar.vue'
+import useMiddleInteractive from './use-middle-interactive'
 import { formatTime } from '@/assets/js/utils'
 import { PLAY_MODE } from '@/assets/js/constant'
 import Scroll from '../base/scroll/scroll.vue'
@@ -105,6 +115,14 @@ export default {
     const { modeIcon, changeMode } = useMode()
     const { getFavoriteIcon, toggleFavorite } = useFavorite()
     const { cdCls, cdRef, cdImageRef } = userCd()
+    const {
+      currentShow,
+      middleLStyle,
+      middleRStyle,
+      onMiddleTouchStart,
+      onMiddleTouchMove,
+      onMiddleTouchEnd
+    } = useMiddleInteractive()
     const {
       currentLyric,
       currentLineNum,
@@ -290,7 +308,13 @@ export default {
       cdCls,
       playingLyric,
       currentLyric,
-      currentLineNum
+      currentLineNum,
+      currentShow,
+      middleLStyle,
+      middleRStyle,
+      onMiddleTouchStart,
+      onMiddleTouchMove,
+      onMiddleTouchEnd
     }
   }
 }
