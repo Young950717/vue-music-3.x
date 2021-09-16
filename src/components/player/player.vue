@@ -1,5 +1,5 @@
 <template>
-  <div class="player">
+  <div class="player" v-show="playlist.length">
     <div class="normal-player" v-show="fullScreen">
       <div class="background">
         <img :src="currentSong.pic" />
@@ -57,6 +57,7 @@
           <span class="time time-l">{{ formatTime(currentTime) }}</span>
           <div class="progress-bar-wrapper">
             <progress-bar
+              ref="barRef"
               @progress-changed="onProgressChanged"
               @progress-changing="onProgressChanging"
               :progress="progress"
@@ -83,13 +84,14 @@
         </div>
       </div>
     </div>
+    <mini-player :progress="progress" :togglePlay="togglePlay"></mini-player>
     <audio ref="audioRef" @ended="end" @canplay="ready" @error="error" @pause="pause" @timeupdate="updateTime"></audio>
   </div>
 </template>
 
 <script>
 import { useStore } from 'vuex'
-import { computed, watch, ref } from 'vue'
+import { computed, watch, ref, nextTick } from 'vue'
 import useMode from './user-mode'
 import useFavorite from './use-favorite'
 import userCd from './use-cd'
@@ -99,11 +101,13 @@ import useMiddleInteractive from './use-middle-interactive'
 import { formatTime } from '@/assets/js/utils'
 import { PLAY_MODE } from '@/assets/js/constant'
 import Scroll from '../base/scroll/scroll.vue'
+import MiniPlayer from './mini-player.vue'
 export default {
   name: 'player',
   components: {
     ProgressBar,
-    Scroll
+    Scroll,
+    MiniPlayer
   },
   setup () {
     // data
@@ -111,6 +115,7 @@ export default {
     const songReady = ref(false) // 歌曲是否已经准备好播放
     const currentTime = ref(0) // 当前播放时间
     let progressChanging = false // 是否手动拖动标记
+    const barRef = ref(null)
     // hooks
     const { modeIcon, changeMode } = useMode()
     const { getFavoriteIcon, toggleFavorite } = useFavorite()
@@ -174,6 +179,14 @@ export default {
         stopLyric()
       }
     })
+
+    watch(fullScreen, async (newFullScreen) => {
+      if (newFullScreen) {
+        await nextTick() // setOffset操作了dom
+        barRef.value.setOffset(progress.value)
+      }
+    })
+
     // methods
     function goBack () {
       store.commit('setFullScreen', false)
@@ -279,9 +292,11 @@ export default {
       fullScreen,
       currentSong,
       progress,
+      playlist,
       currentTime,
       audioRef,
       cdRef,
+      barRef,
       lyricScrollRef,
       lyricListRef,
       cdImageRef,
