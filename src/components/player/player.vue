@@ -1,89 +1,91 @@
 <template>
   <div class="player" v-show="playlist.length">
-    <div class="normal-player" v-show="fullScreen">
-      <div class="background">
-        <img :src="currentSong.pic" />
-      </div>
-      <!-- 标题 -->
-      <div class="top">
-        <div class="back">
-          <i class="icon-back" @click="goBack"></i>
+    <transition name="normal" appear @enter="enter" @after-enter="afterEnter" @leave="leave" @after-leave="afterLeave">
+      <div class="normal-player" v-show="fullScreen">
+        <div class="background">
+          <img :src="currentSong.pic" />
         </div>
-        <h1 class="title">{{ currentSong.name }}</h1>
-        <h2 class="subtitle">{{ currentSong.singer }}</h2>
-      </div>
-      <!-- 大cd -->
-      <div
-        class="middle"
-        @touchstart.prevent="onMiddleTouchStart"
-        @touchmove.prevent="onMiddleTouchMove"
-        @touchend.prevent="onMiddleTouchEnd"
-      >
-        <div class="middle-l" :style="middleLStyle">
-          <div class="cd-wrapper">
-            <div ref="cdRef" class="cd">
-              <img ref="cdImageRef" :src="currentSong.pic" class="image" :class="cdCls" />
+        <!-- 标题 -->
+        <div class="top">
+          <div class="back">
+            <i class="icon-back" @click="goBack"></i>
+          </div>
+          <h1 class="title">{{ currentSong.name }}</h1>
+          <h2 class="subtitle">{{ currentSong.singer }}</h2>
+        </div>
+        <!-- 大cd -->
+        <div
+          class="middle"
+          @touchstart.prevent="onMiddleTouchStart"
+          @touchmove.prevent="onMiddleTouchMove"
+          @touchend.prevent="onMiddleTouchEnd"
+        >
+          <div class="middle-l" :style="middleLStyle">
+            <div ref="cdWrapperRef" class="cd-wrapper">
+              <div ref="cdRef" class="cd">
+                <img ref="cdImageRef" :src="currentSong.pic" class="image" :class="cdCls" />
+              </div>
+            </div>
+            <div class="playing-lyric-wrapper">
+              <div class="playing-lyric">{{ playingLyric }}</div>
             </div>
           </div>
-          <div class="playing-lyric-wrapper">
-            <div class="playing-lyric">{{ playingLyric }}</div>
-          </div>
-        </div>
-        <scroll ref="lyricScrollRef" class="middle-r" :style="middleRStyle">
-          <div class="lyric-wrapper">
-            <div ref="lyricListRef" v-if="currentLyric">
-              <p
-                class="text"
-                v-for="(line, index) in currentLyric.lines"
-                :class="{ current: currentLineNum === index }"
-                :key="line.num"
-              >
-                {{ line.txt }}
-              </p>
+          <scroll ref="lyricScrollRef" class="middle-r" :style="middleRStyle">
+            <div class="lyric-wrapper">
+              <div ref="lyricListRef" v-if="currentLyric">
+                <p
+                  class="text"
+                  v-for="(line, index) in currentLyric.lines"
+                  :class="{ current: currentLineNum === index }"
+                  :key="line.num"
+                >
+                  {{ line.txt }}
+                </p>
+              </div>
+              <div class="pure-music" v-show="pureMusicLyric">
+                <p>{{ pureMusicLyric }}</p>
+              </div>
             </div>
-            <div class="pure-music" v-show="pureMusicLyric">
-              <p>{{ pureMusicLyric }}</p>
+          </scroll>
+        </div>
+        <!-- 进度条播放按钮 -->
+        <div class="bottom">
+          <div class="dot-wrapper">
+            <span :class="{ active: currentShow === 'cd' }" class="dot"></span>
+            <span :class="{ active: currentShow === 'lyric' }" class="dot"></span>
+          </div>
+          <div class="progress-wrapper">
+            <span class="time time-l">{{ formatTime(currentTime) }}</span>
+            <div class="progress-bar-wrapper">
+              <progress-bar
+                ref="barRef"
+                @progress-changed="onProgressChanged"
+                @progress-changing="onProgressChanging"
+                :progress="progress"
+              ></progress-bar>
             </div>
+            <span class="time time-r">{{ formatTime(currentSong.duration) }}</span>
           </div>
-        </scroll>
-      </div>
-      <!-- 进度条播放按钮 -->
-      <div class="bottom">
-        <div class="dot-wrapper">
-          <span :class="{ active: currentShow === 'cd' }" class="dot"></span>
-          <span :class="{ active: currentShow === 'lyric' }" class="dot"></span>
-        </div>
-        <div class="progress-wrapper">
-          <span class="time time-l">{{ formatTime(currentTime) }}</span>
-          <div class="progress-bar-wrapper">
-            <progress-bar
-              ref="barRef"
-              @progress-changed="onProgressChanged"
-              @progress-changing="onProgressChanging"
-              :progress="progress"
-            ></progress-bar>
-          </div>
-          <span class="time time-r">{{ formatTime(currentSong.duration) }}</span>
-        </div>
-        <div class="operators">
-          <div class="icon i-left">
-            <i :class="modeIcon" @click="changeMode"></i>
-          </div>
-          <div class="icon i-left" :class="disableCls">
-            <i @click="prev" class="icon-prev"></i>
-          </div>
-          <div class="icon i-center" :class="disableCls">
-            <i @click="togglePlay" :class="playIcon"></i>
-          </div>
-          <div class="icon i-right" :class="disableCls">
-            <i @click="next" class="icon-next"></i>
-          </div>
-          <div class="icon i-right">
-            <i @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
+          <div class="operators">
+            <div class="icon i-left">
+              <i :class="modeIcon" @click="changeMode"></i>
+            </div>
+            <div class="icon i-left" :class="disableCls">
+              <i @click="prev" class="icon-prev"></i>
+            </div>
+            <div class="icon i-center" :class="disableCls">
+              <i @click="togglePlay" :class="playIcon"></i>
+            </div>
+            <div class="icon i-right" :class="disableCls">
+              <i @click="next" class="icon-next"></i>
+            </div>
+            <div class="icon i-right">
+              <i @click="toggleFavorite(currentSong)" :class="getFavoriteIcon(currentSong)"></i>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </transition>
     <mini-player :progress="progress" :togglePlay="togglePlay"></mini-player>
     <audio ref="audioRef" @ended="end" @canplay="ready" @error="error" @pause="pause" @timeupdate="updateTime"></audio>
   </div>
@@ -96,6 +98,7 @@ import useMode from './user-mode'
 import useFavorite from './use-favorite'
 import userCd from './use-cd'
 import useLyric from './use-lyric'
+import useAnimation from './use-animation'
 import ProgressBar from './progress-bar.vue'
 import useMiddleInteractive from './use-middle-interactive'
 import { formatTime } from '@/assets/js/utils'
@@ -120,6 +123,13 @@ export default {
     const { modeIcon, changeMode } = useMode()
     const { getFavoriteIcon, toggleFavorite } = useFavorite()
     const { cdCls, cdRef, cdImageRef } = userCd()
+    const {
+      cdWrapperRef,
+      enter,
+      afterEnter,
+      leave,
+      afterLeave
+    } = useAnimation()
     const {
       currentShow,
       middleLStyle,
@@ -329,7 +339,12 @@ export default {
       middleRStyle,
       onMiddleTouchStart,
       onMiddleTouchMove,
-      onMiddleTouchEnd
+      onMiddleTouchEnd,
+      cdWrapperRef,
+      enter,
+      afterEnter,
+      leave,
+      afterLeave
     }
   }
 }
