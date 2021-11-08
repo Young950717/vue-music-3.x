@@ -30,3 +30,24 @@ export function changeMode ({ commit, state, getters }, mode) {
   commit('setCurrentIndex', index)
   commit('setPlayMode', mode)
 }
+
+export function removeSong ({ commit, state }, song) {
+  // debugger
+  const sequencelist = state.sequencelist.slice()
+  const playlist = state.playlist.slice()
+
+  const sequenceIndex = findIndex(sequencelist, song)
+  const playlistIndex = findIndex(playlist, song)
+
+  sequencelist.splice(sequenceIndex, 1)
+  playlist.splice(playlistIndex, 1)
+
+  commit('setSequenceList', sequencelist)
+  commit('setPlayList', playlistIndex)
+}
+
+function findIndex (list, song) {
+  return list.findIndex(item => {
+    return song.id === item.id
+  })
+}

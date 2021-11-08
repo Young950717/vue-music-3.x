@@ -8,7 +8,7 @@
       </div>
       <div ref="sliderWrapperRef" class="slider-wrapper">
         <div class="slider-group">
-          <div class="slider-page" v-for="song in playlist" :key="song.id">
+          <div class="slider-page" v-for="song in playList" :key="song.id">
             <h2 class="name">{{ song.name }}</h2>
             <p class="desc">{{ song.singer }}</p>
           </div>
@@ -19,19 +19,25 @@
           <i class="icon-mini" :class="miniPlayIcon" @click.stop="togglePlay"></i>
         </progress-circle>
       </div>
+      <div class="control" @click.stop="showPlaylist">
+        <i class="icon-playlist"></i>
+      </div>
+      <playlist ref="playlistRef"></playlist>
     </div>
   </transition>
 </template>
 
 <script>
 import { useStore } from 'vuex'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import useCd from './use-cd'
 import ProgressCircle from './progress-circle.vue'
 import userMiniSlider from './use-mini-slider'
+import playlist from './playlist.vue'
 export default {
   components: {
-    ProgressCircle
+    ProgressCircle,
+    playlist
   },
   name: 'mini-player',
   props: {
@@ -43,10 +49,11 @@ export default {
   },
   setup () {
     const store = useStore()
+    const playlistRef = ref(null)
     const fullScreen = computed(() => store.state.fullScreen)
     const currentSong = computed(() => store.getters.currentSong)
     const playing = computed(() => store.state.playing)
-    const playlist = computed(() => store.state.playlist)
+    const playList = computed(() => store.state.playlist)
     const miniPlayIcon = computed(() => {
       return playing.value ? 'icon-pause-mini' : 'icon-play-mini'
     })
@@ -55,12 +62,17 @@ export default {
     function showNormalPlayer () {
       store.commit('setFullScreen', true)
     }
+    function showPlaylist () {
+      playlistRef.value.show()
+    }
     return {
       fullScreen,
       currentSong,
-      playlist,
+      playList,
+      playlistRef,
       cdCls,
       cdRef,
+      showPlaylist,
       cdImageRef,
       miniPlayIcon,
       showNormalPlayer,
