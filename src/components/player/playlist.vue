@@ -1,7 +1,7 @@
 <template>
   <teleport to="body">
     <transition name="list-fade">
-      <div class="playlist" v-show="playlist.length && visiable" @click="hide">
+      <div class="playlist" v-show="playlist.length && visible" @click="hide">
         <div class="list-wrapper" @click.stop>
           <div class="list-header">
             <h1 class="title">
@@ -17,7 +17,7 @@
                 <span class="favorite" @click="toggleFavorite(song)">
                   <i :class="getFavoriteIcon(song)"></i>
                 </span>
-                <span class="delete" @click.stop="removeSong(song)">
+                <span class="delete" :class="{'disable': removing}" @click.stop="removeSong(song)">
                   <i class="icon-delete"></i>
                 </span>
               </li>
@@ -44,7 +44,8 @@ export default {
     scroll
   },
   setup () {
-    const visiable = ref(false)
+    const removing = ref(false)
+    const visible = ref(false)
     const listScollRef = ref(null)
     const listRef = ref(null)
     const store = useStore()
@@ -55,10 +56,11 @@ export default {
     const sequenceList = computed(() => store.state.sequencelist)
 
     // 除了手动切换，歌曲自动播放完也要执行scrollToElement这个动作
-    watch(currentSong, async () => {
-      if (!visiable.value) return
+    watch(currentSong, async (newSong) => {
+      if (!visible.value || !newSong.id) {
+          return
+      }
       await nextTick()
-      // console.log(1)
       scrollToCurrent()
     })
 
@@ -69,10 +71,10 @@ export default {
     }
 
     function hide () {
-      visiable.value = false
+      visible.value = false
     }
     async function show () {
-      visiable.value = true
+      visible.value = true
       await nextTick()
       refreshScroll()
       scrollToCurrent()
@@ -81,10 +83,10 @@ export default {
       listScollRef.value.scroll.refresh()
     }
     function scrollToCurrent () {
-      // debugger
       const index = sequenceList.value.findIndex(song => {
         return song.id === currentSong.value.id
       })
+      if (index === -1) return
       const target = listRef.value.$el.children[index]
       listScollRef.value.scroll.scrollToElement(target, 300)
     }
@@ -97,12 +99,18 @@ export default {
       store.commit('setPlayingState', true)
     }
     function removeSong (song) {
-      // debugger
+      if (removing.value) return
+      removing.value = true
       store.dispatch('removeSong', song)
+      // 删除动画的时间
+      setTimeout(() => {
+         removing.value = false
+      }, 300)
     }
 
     return {
-      visiable,
+      removing,
+      visible,
       playlist,
       sequenceList,
       modeIcon,

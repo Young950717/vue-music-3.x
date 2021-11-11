@@ -177,6 +177,7 @@ export default {
       const audioEl = audioRef.value
       audioEl.src = newSong.url
       audioEl.play()
+       store.commit('setPlayingState', true)
     })
     watch(playing, newPlaying => {
       if (!songReady.value) return
@@ -224,10 +225,6 @@ export default {
         }
         // 更新currentIndex
         store.commit('setCurrentIndex', index)
-        // 切换之后要播放
-        if (!playing.value) {
-          store.commit('setPlayingState', true)
-        }
       }
     }
 
@@ -244,10 +241,6 @@ export default {
         }
         // 更新currentIndex
         store.commit('setCurrentIndex', index)
-        // 切换之后要播放
-        if (!playing.value) {
-          store.commit('setPlayingState', true)
-        }
       }
     }
 

@@ -3,7 +3,7 @@ import { useStore } from 'vuex'
 import BScroll from '@better-scroll/core'
 import Slide from '@better-scroll/slide'
 BScroll.use(Slide)
-export default function userMiniSlider () {
+export default function userMiniSlider() {
   const sliderWrapperRef = ref(null) // slider外层dom
   const slider = ref(null)
   const store = useStore()
@@ -34,7 +34,6 @@ export default function userMiniSlider () {
             })
           sliderVal.on('slidePageChanged', ({ pageX }) => {
             store.commit('setCurrentIndex', pageX)
-            store.commit('setPlayingState', true)
           })
         } else {
           sliderVal.refresh()
@@ -47,6 +46,13 @@ export default function userMiniSlider () {
       if (sliderVal && sliderShow.value) {
         // debugger
         sliderVal.goToPage(newIndex, 0, 0)
+      }
+    })
+    // 数据发生了变化，但是dom未及时更新，需要触发sliderVal.refresh()
+    watch(playlist, async () => {
+      if (sliderVal && sliderShow.value) {
+        await nextTick()
+        sliderVal.refresh()
       }
     })
   })
